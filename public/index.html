@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>ITO-Game</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="title">
+    <h1>ITO</h1>
+    <div class="hr-line"></div>
+    <h2>Entrelace seus pensamentos!<br>Um party game cooperativo</h2>
+  </div>
+  <div class="room-access">
+    <input type="text" id="inp-id" placeholder="room id">
+    <button class="cta-button" onclick="entrarSala()">Entrar</button>
+    <button class="cta-button" onclick="criarSala()">Criar</button>
+  </div>
+
+  <script>
+    function criarSala() {
+      fetch('/criar-sala')
+        .then(response => response.json())
+        .then(data => {
+          document.querySelector('#inp-id').value = data.idSala;
+          navigator.clipboard.writeText(window.location.host +'/sala/'+data.idSala);
+        });
+    }
+
+    function entrarSala(){
+      let input = document.querySelector('#inp-id').value;
+      if(input === "") return;
+      document.location.href = 'sala/' + input;
+    }
+  </script>
+</body>
+</html>

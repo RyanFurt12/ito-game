@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>ITO-Game | Sala do jogo: </title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="title">
+    <h1>ITO</h1>
+    <div class="hr-line"></div>
+    <h2>Sala do Jogo {idSala}!<br>Aguardando Jogadores...</h2>
+  </div>
+  <div id="waiting">
+    <h3 id="jogadores"></h3>
+    <button class="cta-button" onclick="iniciarJogo()">Iniciar Jogo</button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const idSala = window.location.pathname.split('/')[2];
+    const socket = io();
+    document.querySelector('h2').innerHTML = 'Sala do Jogo '+ idSala + '!<br>Aguardando Jogadores...';
+    document.title += idSala;
+    
+    socket.emit('entrarSala', idSala);
+
+    socket.on('atualizarJogadores', (quantidade) => {
+      document.getElementById('jogadores').innerText = 'Jogadores: ' + quantidade;
+    });
+
+    socket.on('salaErrada', () => {
+      document.querySelector('#waiting').classList.toggle('hidden');
+      document.querySelector('h2').innerHTML = "404 - Sala Não Encontrada<br>Retornando para Home!"; 
+
+      setTimeout(()=>{window.location.href = '/'}, 2000)
+    });
+
+    socket.on('numeroJogador', (numero) => {
+      document.querySelector('h2').innerText = "Seu número é "+ numero; 
+      document.querySelector('#waiting').classList.toggle('hidden');
+    });
+
+    function iniciarJogo() {
+      socket.emit('iniciarJogo', idSala);
+    }
+  </script>
+</body>
+</html>
