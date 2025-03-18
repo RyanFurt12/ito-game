@@ -11,9 +11,19 @@
     <div class="hr-line"></div>
     <h2>Sala do Jogo {idSala}!<br>Aguardando Jogadores...</h2>
   </div>
+
   <div id="waiting">
     <h3 id="jogadores"></h3>
     <button class="cta-button" onclick="iniciarJogo()">Iniciar Jogo</button>
+    <button class="cta-button" onclick="toggleModal()">Ver Temas</button>
+  </div>
+
+  <div id="modal-themes" class="hidden">
+    <div class="modal">
+      <button class="cta-button" onclick="toggleModal()">X</button>
+      <h2>Temas</h2>
+      <div class="list"></div>
+    </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -24,6 +34,14 @@
     document.title += idSala;
     
     socket.emit('entrarSala', idSala);
+
+    socket.on('atualizarTemas', (temas) => {
+      console.log("temas:", temas)
+      let temaContainer = document.querySelector('#modal-themes .modal .list');
+      temas.forEach(t => {
+        temaContainer.innerHTML += '<p>'+t.replace(':', ':<br>')+'</p>';
+      });
+    });
 
     socket.on('atualizarJogadores', (quantidade) => {
       document.getElementById('jogadores').innerText = 'Jogadores: ' + quantidade;
@@ -43,6 +61,10 @@
 
     function iniciarJogo() {
       socket.emit('iniciarJogo', idSala);
+    }
+
+    function toggleModal() {
+      document.querySelector('#modal-themes').classList.toggle('hidden')
     }
   </script>
 </body>
