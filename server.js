@@ -2,6 +2,9 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 
+const temasData = require('./content/themes.json');
+const temas = temasData.themes;
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -19,10 +22,23 @@ app.get('/sala/:id', (req, res) => {
 //back-end
 app.get('/criar-sala', (req, res) => {
   const idSala = Math.random().toString(36).substring(3, 8);
-  salas[idSala] = { jogadores: [], status: 'aguardando' };
+  let temasIndexes = []
+  let resTemas = []
+  
+  while (temasIndexes.length < 3) {
+    const num = Math.floor(Math.random() * temas.length);
+    if (!temasIndexes.includes(num)) {
+      temasIndexes.push(num);
+      resTemas.push(temas[num])
+    }
+  }
 
+  salas[idSala] = { jogadores: [], status: 'aguardando', temas: resTemas };
+  
   res.send({ idSala: `${idSala}` });
 });
+
+
 
 io.on('connection', (socket) => {
   socket.on('entrarSala', (idSala) => {
@@ -32,6 +48,7 @@ io.on('connection', (socket) => {
 
       socket.join(idSala)
       io.to(idSala).emit('atualizarJogadores', salas[idSala].jogadores.length);
+      io.to(socket.id).emit('atualizarTemas', salas[idSala].temas);
     }
     else{
       io.to(socket.id).emit('salaErrada');
