@@ -6,16 +6,29 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="title">
+  <div id="title" class="title">
     <h1>ITO</h1>
     <div class="hr-line"></div>
-    <h2>Sala do Jogo {idSala}!<br>Aguardando Jogadores...</h2>
+    <h2 id="sala-info"></h2>
   </div>
-
+  
   <div id="waiting">
     <h3 id="jogadores"></h3>
     <button class="cta-button" onclick="iniciarJogo()">Iniciar Jogo</button>
     <button class="cta-button" onclick="toggleModal()">Ver Temas</button>
+  </div>
+
+  <div id="flip-card-section" class="hidden">
+    <div class="flip-card-container" onclick="flipCard()">
+      <div class="flip-card" id="card">
+        <div class="flip-card-front">
+          Clique para ver seu número
+        </div>
+        <div class="flip-card-back" id="card-back">
+          ??
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="modal-themes" class="hidden">
@@ -30,16 +43,17 @@
   <script>
     const idSala = window.location.pathname.split('/')[2];
     const socket = io();
-    document.querySelector('h2').innerHTML = 'Sala do Jogo '+ idSala + '!<br>Aguardando Jogadores...';
+
+    document.querySelector('#sala-info').innerHTML = 'Sala do Jogo: ' + idSala;// + '!<br>Aguardando Jogadores...';
     document.title += idSala;
-    
+
     socket.emit('entrarSala', idSala);
 
     socket.on('atualizarTemas', (temas) => {
-      console.log("temas:", temas)
       let temaContainer = document.querySelector('#modal-themes .modal .list');
+      temaContainer.innerHTML = '';
       temas.forEach(t => {
-        temaContainer.innerHTML += '<p>'+t.replace(':', ':<br>')+'</p>';
+        temaContainer.innerHTML += '<p>' + t.replace(':', ':<br>') + '</p>';
       });
     });
 
@@ -48,15 +62,20 @@
     });
 
     socket.on('salaErrada', () => {
-      document.querySelector('#waiting').classList.toggle('hidden');
-      document.querySelector('h2').innerHTML = "404 - Sala Não Encontrada<br>Retornando para Home!"; 
-
-      setTimeout(()=>{window.location.href = '/'}, 2000)
+      document.querySelector('#waiting').classList.add('hidden');
+      document.querySelector('#sala-info').innerHTML = "404 - Sala Não Encontrada<br>Retornando para Home!";
+      setTimeout(() => { window.location.href = '/' }, 2000);
     });
 
     socket.on('numeroJogador', (numero) => {
-      document.querySelector('h2').innerText = "Seu número é "+ numero; 
-      document.querySelector('#waiting').classList.toggle('hidden');
+      document.querySelector('#waiting').classList.add('hidden');
+      document.querySelector('#title').classList.add('title-small');
+      document.querySelector('#flip-card-section').classList.remove('hidden');
+      document.querySelector('#sala-info').innerHTML = 'Sala do Jogo ' + idSala;
+
+      const cardBack = document.querySelector('#card-back');
+      cardBack.innerText = numero;
+      cardBack.style.background = getCardColor(numero);
     });
 
     function iniciarJogo() {
@@ -64,7 +83,36 @@
     }
 
     function toggleModal() {
-      document.querySelector('#modal-themes').classList.toggle('hidden')
+      document.querySelector('#modal-themes').classList.toggle('hidden');
+    }
+
+    function flipCard() {
+      document.getElementById('card').classList.toggle('flipped');
+    }
+
+    function hexToRgb(hex) {
+      const bigint = parseInt(hex.replace('#', ''), 16);
+      return {
+        r: (bigint >> 16) & 255,
+        g: (bigint >> 8) & 255,
+        b: bigint & 255
+      };
+    }
+
+    function interpolateColor(hex1, hex2, t) {
+      const color1 = hexToRgb(hex1);
+      const color2 = hexToRgb(hex2);
+      const r = Math.round(color1.r + (color2.r - color1.r) * t);
+      const g = Math.round(color1.g + (color2.g - color1.g) * t);
+      const b = Math.round(color1.b + (color2.b - color1.b) * t);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function getCardColor(numero) {
+      const start = '#ffcc00'; // 0
+      const end = '#828076';   // 100
+      const t = Math.max(0, Math.min(100, numero)) / 100;
+      return interpolateColor(start, end, t);
     }
   </script>
 </body>
